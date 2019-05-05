@@ -1,0 +1,25 @@
+# vad-korero-demo
+
+> Demo of voice activity detection and transcription with the Kōrero Māori API
+
+## Build Setup
+
+``` bash
+# install dependencies
+npm install
+
+# serve with hot reload at localhost:8080
+npm run dev
+
+# build for production with minification
+npm run build
+
+# build for production and view the bundle analyzer report
+npm run build --report
+```
+
+For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+
+## Ngā Mihi
+This demo uses code from https://github.com/kdavis-mozilla/vad.js and https://github.com/grishkovelli/vue-audio-recorder. I couldn't import them directly as I needed to modify the code a bit to suit this demo.
