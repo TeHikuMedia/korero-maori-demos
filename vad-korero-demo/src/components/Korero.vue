@@ -90,7 +90,7 @@ export default {
                 // div.remove()
                 this.transcriptions.pop()
                 transcription.status = 'Failed'
-                transcription.delete()
+                // transcription.delete()
                 return
               }
               // xt.innerText = response.data.transcription
@@ -108,6 +108,7 @@ export default {
             })
             .catch((error) => {
               transcription.status = 'Failed'
+              // transcription.delete()
               this.transcriptions.pop()
             })
 

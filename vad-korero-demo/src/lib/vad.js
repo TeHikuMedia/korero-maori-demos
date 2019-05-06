@@ -4,14 +4,14 @@ export default class VAD {
   constructor(options) {
     // Default options
     this.options = {
-      fftSize: 512*2,
-      bufferLen: 512*2, 
+      fftSize: 512*.5,
+      bufferLen: 512*.5, 
       voice_stop: function() {},
       voice_start: function() {},
       smoothingTimeConstant: 0.99, 
       energy_offset: 1e-8, // The initial offset.
-      energy_threshold_ratio_pos: 2, // Signal must be twice the offset
-      energy_threshold_ratio_neg: 0.5, // Signal must be half the offset
+      energy_threshold_ratio_pos: 4, // Signal must be twice the offset
+      energy_threshold_ratio_neg: 0.25, // Signal must be half the offset
       energy_integration: 1, // Size of integration change compared to the signal per second.
       filter: [
         {f: 200, v:0}, // 0 -> 200 is 0
@@ -75,10 +75,11 @@ export default class VAD {
 
     this.voiceTrend = 0;
     this.voiceTrendMax = 10*1.5;
-    this.voiceTrendMin = -10*1.5;
-    this.voiceTrendStart = 5*1.5;
-    this.voiceTrendEnd = -5*2;
-
+    this.voiceTrendMin = -5;
+    this.voiceTrendStart = 2;
+    this.voiceTrendEnd = -5;
+    this.damper = 0.025
+    this.voiceTrendMin = this.voiceTrendEnd - this.damper/10;
     // Create analyser 
     this.analyser = this.options.context.createAnalyser();
     this.analyser.smoothingTimeConstant = this.options.smoothingTimeConstant; // 0.99;
@@ -163,7 +164,7 @@ export default class VAD {
       if(signal > this.energy_threshold_pos) {
         this.voiceTrend = (this.voiceTrend + 1 > this.voiceTrendMax) ? this.voiceTrendMax : this.voiceTrend + 1;
       } else if(signal < -this.energy_threshold_neg) {
-        this.voiceTrend = (this.voiceTrend - 1 < this.voiceTrendMin) ? this.voiceTrendMin : this.voiceTrend - 1;
+        this.voiceTrend = (this.voiceTrend - 1 < this.voiceTrendMin) ? this.voiceTrendMin : this.voiceTrend - 1*(this.vadState ? this.damper : 10);
       } else {
         // voiceTrend gets smaller
         if(this.voiceTrend > 0) {
@@ -218,7 +219,7 @@ export default class VAD {
         ' | start: ' + start +
         ' | end: ' + end
       );
-
+      console.log(this.voiceTrend)
       return signal;
     }
   }

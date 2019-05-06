@@ -155,7 +155,7 @@ export default class {
     this.processor.onaudioprocess = (ev) => {
       if (this.activity){
         if (this.flush){
-          this.lameEncoder.flushPrevious(10*4)
+          this.lameEncoder.flushPrevious(10*1.5)
           this.flush = false
         }
       } else {
