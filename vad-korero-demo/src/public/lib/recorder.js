@@ -1,6 +1,7 @@
 import Encoder from './encoder'
 import { convertTimeMMSS } from '../../../node_modules/vue-audio-recorder/src/lib/utils'
 import VAD from '../../lib/vad.js'
+import vis from './visualize'
 
 export default class {
   constructor (options = {}) {
@@ -9,6 +10,9 @@ export default class {
     this.putRecording    = options.putRecording
     this.afterRecording  = options.afterRecording
     this.micFailed       = options.micFailed
+    this.voiceStop       = options.voiceStop
+    this.voiceStart      = options.voiceStart
+    this.visCanvasID     = options.canvasID
 
     this.bufferSize = 4096
     this.records    = []
@@ -21,9 +25,13 @@ export default class {
 
     this._duration = 0
 
-    this.vad = new VAD();
-    this.activity = false;
-    this.flush = false;
+    this.vad = null
+    this.vis = null
+    this.activity = false
+    this.flush = false
+
+    this.vis = null
+
   }
 
   start () {
@@ -47,6 +55,7 @@ export default class {
   }
 
   stop () {
+    this.vis.stop()
     this.stream.getTracks().forEach((track) => track.stop())
     this.input.disconnect()
     this.processor.disconnect()
@@ -63,6 +72,7 @@ export default class {
     this.isRecording = false
 
     this.afterRecording && this.afterRecording(record)
+    
   }
 
   put () {
@@ -111,14 +121,14 @@ export default class {
     this.processor  = this.context.createScriptProcessor(this.bufferSize, 1, 1)
     this.stream     = stream
 
-    this.voiceStop = () => {
-      console.log('stopped')
+    this._voiceStop = () => {
+      this.voiceStop()
       this.activity = false
       this.put()
       this.start()
     }
-    this.voiceStart = () => {
-      console.log('started')
+    this._voiceStart = () => {
+      this.voiceStart()
       this.activity = true
       this.flush = true
     }
@@ -126,12 +136,21 @@ export default class {
     var options = {
       debug: true,
       source: this.input,
-      voice_stop: this.voiceStop,
-      voice_start: this.voiceStart,
+      voice_stop: this._voiceStop,
+      voice_start: this._voiceStart,
     }; 
         
     // Create VAD
-    this.vad.contructor(options)
+    this.vad = new VAD(options)
+    
+    if (this.visCanvasID){
+      try{
+        this.vis = new vis(this.visCanvasID, this.input, this.input.context)
+        this.vis.start()
+      } catch(error){
+        console.log(error)
+      }
+    }
 
     this.processor.onaudioprocess = (ev) => {
       if (this.activity){
@@ -139,9 +158,7 @@ export default class {
           this.lameEncoder.flushPrevious(10*4)
           this.flush = false
         }
-        console.log('active')
       } else {
-        console.log('inactive')
       }
       const sample = ev.inputBuffer.getChannelData(0)
       let sum = 0.0

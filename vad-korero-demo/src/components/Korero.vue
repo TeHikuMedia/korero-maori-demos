@@ -1,12 +1,31 @@
 <template>
   <div class="Korero">
-    <div id="vadStatus" v-bind:class="{ active: vadOn }"></div>
-    <button id="startVAD">{{buttonText}}</button>
-    <div id="transcriptions"></div>
-    <div id='audios'>
-    </div>
-  </div>
 
+    <div class="header">
+      <button id="startVAD">{{buttonText}}</button>
+      <div id="vadStatus" v-bind:class="{ active: vadOn }">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="body">
+      <div id="transcriptions">
+        <div v-for="(item, index) in transcriptions.slice().reverse()" class='transcription' v-if="item.status != 'Failed'"> 
+          <button class="delete"  v-on:click="deleteObject(index)">delete</button>
+          <div v-if="item.status == 'Transcribing'" class="text">
+            {{item.status}}
+          </div>
+          <div v-if="item.text" class='text'>
+            {{item.text}}
+          </div>
+          <div class="audio">
+            <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls></audio>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </template>
 
 <script>
@@ -23,8 +42,15 @@ export default {
       vadOn: false,
       recordingOn: false,
       recorder: null,
-      buttonText: 'Start'
+      buttonText: 'Start',
+      transcriptions: [],
     }
+  },
+  methods: {
+    deleteObject: function (e) {
+      console.log(e)
+      this.transcriptions.splice(e, 1)
+    },
   },
   mounted: function () {
 
@@ -33,10 +59,20 @@ export default {
       if (this.recorder==null){
         this.recorder = new recorder({
           putRecording : (record) => {
-            console.log('putting')
-            var xt = document.createElement('div')
-            xt.innerText = 'Transcribbing...'
-            transcriptions.appendChild(xt)            
+            var transcription = {
+              status: 'Transcribing',
+              text: null,
+              audio: null,
+            }
+            this.transcriptions.push(transcription)
+
+            // var div = document.createElement('div')
+            // var xt = document.createElement('div')
+            // xt.innerText = 'Transcribing...'
+            // div.classList.add('transcription')
+            // xt.classList.add('text')
+            // // div.append(xt)
+            // transcriptions.insertBefore(div, transcriptions.firstChild)
             var formData = new FormData();
             formData.enctype="multipart/form-data";
             formData.append('audio_file', record.blob, 'audio_file.mp3')            
@@ -49,51 +85,60 @@ export default {
                   Authorization: "Token 899f4739922881b0008716d7253269af9a77ca5e"},//0d0f9ebb85d621d7853052cd17f370e481379c6f"},
               },
               )
-            .then(response => {
-              xt.innerText = response.data.transcription
+            .then((response) => {
+              if (response.data.transcription == '' || response.data.transcription == ' ' ){
+                // div.remove()
+                this.transcriptions.pop()
+                transcription.status = 'Failed'
+                transcription.delete()
+                return
+              }
+              // xt.innerText = response.data.transcription
+              transcription['text'] = response.data.transcription
+              transcription['audio_url'] = record.url
+              transcription['status'] = 'Success'
+              // var audio = document.createElement('audio')
+              // audio.controls = 'controls';
+              // audio.src =  record.url;
+              // audio.type = 'audio/mp3';
+              // // div.append(audio)
+
+
+
             })
-            .catch(error => {
-              console.log(error)
+            .catch((error) => {
+              transcription.status = 'Failed'
+              this.transcriptions.pop()
             })
 
           },
           afterRecording  : (stream) =>{
-
             startVAD.classList.remove('on')
-            startVAD.classList.remove('on')
-            
-            this.buttonText = 'Start'
-
-            audios.childNodes.forEach(function(i){audios.removeChild(i)})
-
-            var records = this.recorder.recordList()
-            for (var i = 0; i<records.length ; i++){
-              console.log(records[i])
-              var audio = document.createElement('audio')
-              audio.controls = 'controls';
-              audio.src =  records[i].url;
-              audio.type = 'audio/mp3';
-              audios.appendChild(audio)
-
-            }
-            
+            this.buttonText = 'Start'            
             this.recorder=null;
-            
-
-
           },
           pauseRecording  : function(){console.log('paused')},
           micFailed       : function(){console.log('failed')},
-          // bitRate         : 64,
-          // sampleRate      : this.sampleRate,
+          voiceStop: () => {
+            
+            this.vadOn = false
+          },
+          voiceStart: () => {
+            this.vadOn = true
+
+          },
+          canvasID: 'canvas',
+          bitRate         : 64,
+          sampleRate      : 22000,
           // format          : this.format
         })
       }
 
       if (startVAD.classList.contains('on')){
         this.recorder.stop();
-        // startVAD.classList.remove('on')
-        // this.recorder=null;
+        startVAD.classList.remove('on')
+        this.recorder=null;
+        this.vadOn = false;
         // this.buttonText = 'Start'
       } else {
         this.recorder.start()
@@ -101,84 +146,111 @@ export default {
         this.buttonText = 'Stop'
       }
       
-    // var vad = new VAD();
-
-      
-              
-      // // Start the recording
-      // window.setInterval(() => {
-      //   if (this.vadOn && rec.isRecording){
-      //     console.log('pass')
-      //     //pass
-      //   } else if (!this.vadOn && rec.isRecording) {
-      //     console.log('stopping')
-      //     rec.stop()
-      //   } else if (this.vadOn && !rec.isRecording) {
-      //     console.log('ERROR')
-      //   } else if (!this.vadOn && !rec.isRecording) {
-      //     rec.start()
-      //     console.log('starting')
-      //   }
-      // }, 500)
-      
-        
-
-        // // Create AudioContext
-        // window.AudioContext = window.AudioContext || window.webkitAudioContext;
-        // var audioContext = new AudioContext();
-
-        // var self = this;
-        // // Define function called by getUserMedia 
-        // var startUserMedia = (stream) => {
-        //   // Create MediaStreamAudioSourceNode
-        //   var source = audioContext.createMediaStreamSource(stream);
-
-        //   // Setup options
-        //   var options = {
-        //    debug: true,
-        //    source: source,
-        //    voice_stop: function() {
-        //     // vadStatus.classList.remove('active')
-
-        //     rec.stop();
-        //     self.vadOn = false
-        //   }, 
-        //    voice_start: function() {
-        //     // vadStatus.classList.add('active')
-        //     rec.start();
-        //     self.vadOn = true
-        //     self.recordingOn = true
-            
-        //     }
-        //   }; 
-          
-        //   // Create VAD
-        //   vad.contructor(options)
-
-        // }
-
-        // // Ask for audio device
-        // navigator.getUserMedia = navigator.getUserMedia || 
-        //                          navigator.mozGetUserMedia || 
-        //                          navigator.webkitGetUserMedia;
-        // navigator.getUserMedia({audio: true}, startUserMedia, function(e) {
-        //         console.log("No live audio input in this browser: " + e);
-        // });
 
       }
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-#vadStatus {
+button.delete{
+  position: absolute;
+  right: 0px;
+  top: 0px;
   display: block;
+  margin: 15px;  
+}
+.transcription{
+  position: relative;
+  width: 100%;
+  margin: 20px 30px 20px 30px;
+  max-width: 500px;
+  /*margin-top: 20px; */
+  font-size: 1.5em;
+  border-radius: 8px;
+  /*box-shadow: 0px 2px 6px -2px rgba(0,0,0,1)  */
+  border: 1px solid black;
+}
+
+.transcription .text {
+  padding-top: 15px;
+  padding-bottom: 15px
+}
+
+.Korero, .header, .body{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.body{
+  height: 100vh;
+  margin-top: -463px;
+  padding-top: 250px;
+}
+.header{
+  padding-bottom: 15px;
+  z-index: 1;
+  background-color: white;
+  /*box-shadow: 0 -2px 10px black;*/
+  border-bottom: 2px solid black;
+}
+#transcriptions{
+  z-index: 0;
+  overflow-y: scroll;  
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  margin-top: 215px;
+  height: 100vh;    
+  /*border-top: 2px solid black;*/
+}
+
+#vadStatus{
+  display: flex;
+  width: 100%;
+  max-width: 560px;  
   height: 100px;
-  width: 100px;
-  background-color: green;
+  align-self: center;
+  align-items: center;
+  border: 4px solid black;
+  border-radius: 4px;
+
 }
 #vadStatus.active{
   background-color: red;
+  border: 4px solid red;
+}
+#vadStatus canvas{
+  z-index: 1;
+  display: block;
+  height: 100%;
+  width: 100%;
+  background-color: #333;
+}
+#startVAD {
+  z-index: 2;
+  align-self: center;
+  margin: 15px;
+  outline: none;
+  background-color: rgb(40,40,40);
+  color: white;
+  width: 150px;
+  font-size: 2em;
+  border: 2px solid black;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+#startVAD.on {
+  background-color: rgb(255, 40, 40);
+  border-color: rgb(200, 40, 40);;
+}
+audio{
+  outline: none;
+  width: 100%;
+  padding-bottom: 15px;
+}
+.audio{
+  padding: 0px 15px 0px 15px;
 }
 </style>

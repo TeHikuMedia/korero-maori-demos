@@ -1,7 +1,7 @@
 
 export default class VAD {
 
-  contructor(options) {
+  constructor(options) {
     // Default options
     this.options = {
       fftSize: 512*2,
@@ -14,7 +14,7 @@ export default class VAD {
       energy_threshold_ratio_neg: 0.5, // Signal must be half the offset
       energy_integration: 1, // Size of integration change compared to the signal per second.
       filter: [
-        {f: 200*2, v:0}, // 0 -> 200 is 0
+        {f: 200, v:0}, // 0 -> 200 is 0
         {f: 2000, v:1} // 200 -> 2k is 1
       ],
       source: null,
