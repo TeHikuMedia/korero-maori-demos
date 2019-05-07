@@ -1,6 +1,5 @@
 <template>
   <div class="Korero">
-
     <div class="header">
       <button id="startVAD">{{buttonText}}</button>
       <div id="vadStatus" v-bind:class="{ active: vadOn }">
@@ -10,7 +9,7 @@
 
     <div class="body">
       <div id="transcriptions">
-        <div v-for="(item, index) in transcriptions.slice().reverse()" class='transcription' v-if="item.status != 'Failed'"> 
+        <div v-for="(item, index) in transcriptions" class='transcription' v-if="item.status != 'Failed'"> 
           <button class="delete"  v-on:click="deleteObject(index)">delete</button>
           <div v-if="item.status == 'Transcribing'" class="text">
             {{item.status}}
@@ -29,16 +28,12 @@
 </template>
 
 <script>
-import VAD from '../lib/vad.js'
-// import Recorder from 'opus-recorder'
-import AudioRecorder from 'vue-audio-recorder'
 import recorder from '../public/lib/recorder.js'
 const axios = require('axios');
 export default {
-  name: 'HelloWorld',
+  name: 'Kōrero',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App',
       vadOn: false,
       recordingOn: false,
       recorder: null,
@@ -48,7 +43,6 @@ export default {
   },
   methods: {
     deleteObject: function (e) {
-      console.log(e)
       this.transcriptions.splice(e, 1)
     },
   },
@@ -199,7 +193,8 @@ button.delete{
   z-index: 0;
   overflow-y: scroll;  
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
   align-items: center;  
   margin-top: 215px;
   height: 100vh;    

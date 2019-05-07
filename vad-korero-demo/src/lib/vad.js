@@ -219,7 +219,7 @@ export default class VAD {
         ' | start: ' + start +
         ' | end: ' + end
       );
-      console.log(this.voiceTrend)
+
       return signal;
     }
   }
