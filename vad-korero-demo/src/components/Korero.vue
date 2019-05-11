@@ -29,6 +29,8 @@
 
 <script>
 import recorder from '../public/lib/recorder.js'
+const ApiAuth = require('../../api_auth')
+const api_auth = ApiAuth.api_auth;
 const axios = require('axios');
 export default {
   name: 'Kōrero',
@@ -60,6 +62,7 @@ export default {
             }
             this.transcriptions.push(transcription)
 
+            console.log(api_auth)
             // var div = document.createElement('div')
             // var xt = document.createElement('div')
             // xt.innerText = 'Transcribing...'
@@ -71,14 +74,11 @@ export default {
             formData.enctype="multipart/form-data";
             formData.append('audio_file', record.blob, 'audio_file.mp3')            
             axios.post(
-              'https://corporalocal.io/api/transcription/?method=stream',
-              // 'https://koreromaori.io/api/transcription/?method=stream',
+              api_auth['url'],
               formData,
               {
-                headers: {
-                  Authorization: "Token 899f4739922881b0008716d7253269af9a77ca5e"},//0d0f9ebb85d621d7853052cd17f370e481379c6f"},
-              },
-              )
+                headers: api_auth['headers'],
+              })
             .then((response) => {
               if (response.data.transcription == '' || response.data.transcription == ' ' ){
                 // div.remove()
@@ -124,7 +124,7 @@ export default {
           },
           canvasID: 'canvas',
           bitRate         : 64,
-          sampleRate      : 22000,
+          sampleRate      : 44100,
           // format          : this.format
         })
       }

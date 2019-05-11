@@ -14,6 +14,8 @@ export default class {
     this.voiceStart      = options.voiceStart
     this.visCanvasID     = options.canvasID
 
+    this.bitRate = options.bitRate || 96
+    this.sampleRate = options.sampleRate || 44100
     this.bufferSize = 4096
     this.records    = []
 
@@ -32,7 +34,13 @@ export default class {
 
     this.vis = null
 
+    // Set Sample Rate according to device and browser campability
+    this.context = new(window.AudioContext || window.webkitAudioContext)()
+    this.sampleRate = this.context.sampleRate
+    this.context.close()
   }
+
+
 
   start () {
     const constraints = {
@@ -51,7 +59,8 @@ export default class {
              .catch(this._micError.bind(this))
     this.isPause = false
     this.isRecording = true
-    this.lameEncoder = new Encoder({})
+
+    this.lameEncoder = new Encoder({bitRate: this.bitRate , sampleRate: this.sampleRate })
   }
 
   stop () {
@@ -115,7 +124,7 @@ export default class {
   }
 
   _micCaptured (stream) {
-    this.context    = new(window.AudioContext || window.webkitAudioContext)()
+    this.context    = new(window.AudioContext || window.webkitAudioContext)({sampleRate: this.sampleRate})
     this.duration   = this._duration
     this.input      = this.context.createMediaStreamSource(stream)
     this.processor  = this.context.createScriptProcessor(this.bufferSize, 1, 1)
