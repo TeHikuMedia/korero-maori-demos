@@ -25,10 +25,10 @@ You need to create a file `api_auth.js` which contains the following,
 
 ```
 api_auth = {
-	headers:{
-		Authorization: "Token YOUR_TOKEN_HERE",
-	},
-	url: 'https://koreromaori.io/api/transcription/?method=stream'
+  headers:{
+    Authorization: "Token YOUR_TOKEN_HERE",
+  },
+  url: 'https://koreromaori.io/api/transcription/?method=stream'
 }
 
 exports.api_auth = api_auth
