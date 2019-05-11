@@ -23,7 +23,7 @@ For a detailed explanation on how things work, check out the [guide](http://vuej
 ## API Setup
 You need to create a file `api_auth.js` which contains the following,
 
-```
+```js
 api_auth = {
   headers:{
     Authorization: "Token YOUR_TOKEN_HERE",
