@@ -60,7 +60,7 @@ export default {
               text: null,
               audio: null,
             }
-            this.transcriptions.push(transcription)
+            this.transcriptions.unshift(transcription)
 
             console.log(api_auth)
             // var div = document.createElement('div')
@@ -82,7 +82,7 @@ export default {
             .then((response) => {
               if (response.data.transcription == '' || response.data.transcription == ' ' ){
                 // div.remove()
-                this.transcriptions.pop()
+                this.transcriptions.pop(0)
                 transcription.status = 'Failed'
                 // transcription.delete()
                 return
@@ -103,7 +103,7 @@ export default {
             .catch((error) => {
               transcription.status = 'Failed'
               // transcription.delete()
-              this.transcriptions.pop()
+              this.transcriptions.pop(0)
             })
 
           },
@@ -191,10 +191,12 @@ button.delete{
 }
 #transcriptions{
   z-index: 0;
-  overflow-y: scroll;  
   display: flex;
-  flex-direction: column-reverse;
-  justify-content: flex-end;
+  flex-direction: column;
+  overflow-y: scroll;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar; 
   align-items: center;  
   margin-top: 215px;
   height: 100vh;    
