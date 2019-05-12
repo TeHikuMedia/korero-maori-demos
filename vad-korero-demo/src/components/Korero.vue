@@ -1,21 +1,27 @@
 <template>
   <div class="Korero">
     <div class="header">
-      <button id="startVAD">{{buttonText}}</button>
-      <div id="vadStatus" v-bind:class="{ active: vadOn }">
-        <canvas id="canvas"></canvas>
+      <button id="startVAD" v-bind:class="{ vad: vadOn, on: recordingOn, 'loading': loadRecording}">
+        <i class="fa fa-microphone" ></i>
+        <i class="fa fa-stop" ></i>
+        <i class="fa fa-spinner fa-spin"></i>
+      </button>
+      <div id="vadStatus" v-bind:class="{ active: vadOn, 'mobile': isMobile()}">
+        <div>
+          <canvas id="canvas" v-if="!isMobile()"></canvas>
+          <span v-if="isMobile() && vadOn && recordingOn">Voice Detected</span>
+          <span v-if="isMobile() && recordingOn && !vadOn">Listening</span>
+          <span v-if="isMobile()">Hit Record</span>
+        </div>
       </div>
     </div>
 
     <div class="body">
       <div id="transcriptions">
-        <div v-for="(item, index) in transcriptions" class='transcription' v-if="item.status != 'Failed'"> 
-          <button class="delete"  v-on:click="deleteObject(index)">delete</button>
-          <div v-if="item.status == 'Transcribing'" class="text">
-            {{item.status}}
-          </div>
-          <div v-if="item.text" class='text'>
-            {{item.text}}
+        <div v-for="(item, index) in transcriptions" class='transcription' v-bind:class="[item.status]" v-if="item.status != 'Failed'"> 
+          <button class="delete" v-if="item.status != 'Transcribing'" v-on:click="deleteObject(index)"><i class="fa fa-times"></i></button>
+          <div class='text'>
+            <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>{{item.text}}
           </div>
           <div class="audio">
             <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls></audio>
@@ -23,12 +29,11 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script>
-import recorder from '../public/lib/recorder.js'
+import recorder from '../lib/recorder.js'
 const ApiAuth = require('../../api_auth')
 const api_auth = ApiAuth.api_auth;
 const axios = require('axios');
@@ -41,18 +46,29 @@ export default {
       recorder: null,
       buttonText: 'Start',
       transcriptions: [],
+      icon: 'fa-microphone',
+      loadRecording: false
     }
   },
   methods: {
     deleteObject: function (e) {
       this.transcriptions.splice(e, 1)
     },
+    isMobile() {
+      if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|SamsungBrowser|Opera Mini/i.test(navigator.userAgent)) {
+        console.log(navigator.userAgent)
+        return true
+      } else {
+        return false
+      }
+    }
   },
   mounted: function () {
 
     startVAD.onclick = event => {
 
       if (this.recorder==null){
+        this.loadRecording = true
         this.recorder = new recorder({
           putRecording : (record) => {
             var transcription = {
@@ -61,15 +77,6 @@ export default {
               audio: null,
             }
             this.transcriptions.unshift(transcription)
-
-            console.log(api_auth)
-            // var div = document.createElement('div')
-            // var xt = document.createElement('div')
-            // xt.innerText = 'Transcribing...'
-            // div.classList.add('transcription')
-            // xt.classList.add('text')
-            // // div.append(xt)
-            // transcriptions.insertBefore(div, transcriptions.firstChild)
             var formData = new FormData();
             formData.enctype="multipart/form-data";
             formData.append('audio_file', record.blob, 'audio_file.mp3')            
@@ -81,34 +88,19 @@ export default {
               })
             .then((response) => {
               if (response.data.transcription == '' || response.data.transcription == ' ' ){
-                // div.remove()
-                this.transcriptions.pop(0)
                 transcription.status = 'Failed'
-                // transcription.delete()
                 return
               }
-              // xt.innerText = response.data.transcription
               transcription['text'] = response.data.transcription
               transcription['audio_url'] = record.url
               transcription['status'] = 'Success'
-              // var audio = document.createElement('audio')
-              // audio.controls = 'controls';
-              // audio.src =  record.url;
-              // audio.type = 'audio/mp3';
-              // // div.append(audio)
-
-
-
             })
             .catch((error) => {
               transcription.status = 'Failed'
-              // transcription.delete()
-              this.transcriptions.pop(0)
             })
 
           },
           afterRecording  : (stream) =>{
-            startVAD.classList.remove('on')
             this.buttonText = 'Start'            
             this.recorder=null;
           },
@@ -122,23 +114,24 @@ export default {
             this.vadOn = true
 
           },
-          canvasID: 'canvas',
+          canvasID: this.isMobile() ? null : 'canvas',
           bitRate         : 64,
           sampleRate      : 44100,
           // format          : this.format
         })
       }
 
-      if (startVAD.classList.contains('on')){
+      if (this.recordingOn){
         this.recorder.stop();
-        startVAD.classList.remove('on')
         this.recorder=null;
         this.vadOn = false;
+        this.recordingOn = false
         // this.buttonText = 'Start'
       } else {
         this.recorder.start()
-        startVAD.classList.add('on')
+        this.recordingOn = true
         this.buttonText = 'Stop'
+        this.loadRecording = false
       }
       
 
@@ -148,12 +141,26 @@ export default {
 </script>
 
 <style scoped>
+.Korero {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  font-size: 14px;
+}
 button.delete{
   position: absolute;
   right: 0px;
   top: 0px;
   display: block;
-  margin: 15px;  
+  border: 0px;
+  margin: 2px;
+  font-size: 0.7em;
+  color: #696969;
+  cursor: pointer;
+  outline: none;
+  background: none;
 }
 .transcription{
   position: relative;
@@ -166,12 +173,19 @@ button.delete{
   /*box-shadow: 0px 2px 6px -2px rgba(0,0,0,1)  */
   border: 1px solid black;
 }
-
+.transcription.Transcribing{
+  border: 0px;
+}
 .transcription .text {
-  padding-top: 15px;
-  padding-bottom: 15px
+  padding: 15px 20px;
+}
+.transcription:nth-of-type(1){
+  margin-top: 40px;
 }
 
+div.transcription.Success div.text [class*=fa]{
+  display: none;
+}
 .Korero, .header, .body{
   display: flex;
   flex-direction: column;
@@ -179,15 +193,14 @@ button.delete{
 }
 .body{
   height: 100vh;
-  margin-top: -463px;
-  padding-top: 250px;
+  margin-top: -225px;
 }
 .header{
   padding-bottom: 15px;
   z-index: 1;
   background-color: white;
-  /*box-shadow: 0 -2px 10px black;*/
-  border-bottom: 2px solid black;
+  padding-left: 15px;
+  padding-right: 15px;  
 }
 #transcriptions{
   z-index: 0;
@@ -198,25 +211,19 @@ button.delete{
   -webkit-overflow-scrolling: touch;
   -ms-overflow-style: -ms-autohiding-scrollbar; 
   align-items: center;  
-  margin-top: 215px;
+  margin-top: 232px;
   height: 100vh;    
-  /*border-top: 2px solid black;*/
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 #vadStatus{
   display: flex;
   width: 100%;
-  max-width: 560px;  
+  max-width: 500px;  
   height: 100px;
   align-self: center;
   align-items: center;
-  border: 4px solid black;
-  border-radius: 4px;
-
-}
-#vadStatus.active{
-  background-color: red;
-  border: 4px solid red;
 }
 #vadStatus canvas{
   z-index: 1;
@@ -225,6 +232,31 @@ button.delete{
   width: 100%;
   background-color: #333;
 }
+#vadStatus div{
+  height: 100%;
+  width: 100%;
+  border: 4px solid black;
+  border-radius: 4px;
+}
+#vadStatus.active div{
+  border-color: red;
+}
+#vadStatus.mobile{
+  height: 28px;
+  max-width: 150px;  
+}
+#vadStatus.mobile div span{
+  display: block;
+  padding: 4px;
+}
+#vadStatus.mobile div{
+  color: white;
+  font-weight: 700;
+  background-color: black;
+}
+#vadStatus.mobile.active div{
+  background-color: red;
+}
 #startVAD {
   z-index: 2;
   align-self: center;
@@ -232,16 +264,34 @@ button.delete{
   outline: none;
   background-color: rgb(40,40,40);
   color: white;
-  width: 150px;
-  font-size: 2em;
+  width: 80px;
+  height: 80px;
   border: 2px solid black;
-  border-radius: 8px;
+  border-radius: 40px;
   padding: 8px 16px;
   cursor: pointer;
 }
+#startVAD [class*=fa]{
+  font-size: 34px !important;
+}
 #startVAD.on {
-  background-color: rgb(255, 40, 40);
-  border-color: rgb(200, 40, 40);;
+  background-color: rgba(255, 40, 40, 0.75);
+  border-color: rgb(200, 40, 40);
+}
+#startVAD.on.vad {
+  background-color: rgba(255, 40, 40, 1);
+}
+#startVAD.on .fa-microphone{
+  display: none;
+}
+#startVAD .fa-stop, #startVAD .fa-spinner{
+  display: none;
+}
+#startVAD.on .fa-stop{
+  display: initial;
+}
+#startVAD.on.loading .fa-spinner{
+  display: initial;
 }
 audio{
   outline: none;

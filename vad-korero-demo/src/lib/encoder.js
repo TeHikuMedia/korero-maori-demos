@@ -6,8 +6,6 @@ export default class {
     this.sampleRate = config.sampleRate || 44100
     this.dataBuffer = []
     this.encoder    = new Mp3Encoder(1, this.sampleRate, this.bitRate)
-    console.log(this.bitRate)
-    console.log(this.sampleRate)
   }
 
   flushPrevious(X){

@@ -1,6 +1,6 @@
 import Encoder from './encoder'
-import { convertTimeMMSS } from '../../../node_modules/vue-audio-recorder/src/lib/utils'
-import VAD from '../../lib/vad.js'
+import { convertTimeMMSS } from '../../node_modules/vue-audio-recorder/src/lib/utils'
+import VAD from './vad.js'
 import vis from './visualize'
 
 export default class {
@@ -12,7 +12,7 @@ export default class {
     this.micFailed       = options.micFailed
     this.voiceStop       = options.voiceStop
     this.voiceStart      = options.voiceStart
-    this.visCanvasID     = options.canvasID
+    this.visCanvasID     = options.canvasID || null
 
     this.bitRate = options.bitRate || 96
     this.sampleRate = options.sampleRate || 44100
@@ -64,7 +64,10 @@ export default class {
   }
 
   stop () {
-    this.vis.stop()
+    if (this.vis){
+      this.vis.stop()
+    }
+
     this.stream.getTracks().forEach((track) => track.stop())
     this.input.disconnect()
     this.processor.disconnect()
@@ -143,7 +146,7 @@ export default class {
     }
 
     var options = {
-      debug: true,
+      debug: false,
       source: this.input,
       voice_stop: this._voiceStop,
       voice_start: this._voiceStart,
