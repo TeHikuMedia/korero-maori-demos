@@ -21,10 +21,30 @@
         <div v-for="(item, index) in transcriptions" class='transcription' v-bind:class="[item.status]" v-if="item.status != 'Failed'"> 
           <button class="delete" v-if="item.status != 'Transcribing'" v-on:click="deleteObject(index)"><i class="fa fa-times"></i></button>
           <div class='text'>
-            <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>{{item.text}}
+            <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>
+
+          <div class='confidence'>
+            <div class="char" v-for="character in item.metadata">
+              <div v-if="character.char==' '"
+                   :style="{backgroundColor: `rgb(255, 40, 40, ${1-character.prob})`}">
+                   &nbsp;&nbsp;
+                   <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
+              </div>
+              <div v-if="character.char!=' '"
+                   :style="{
+                      backgroundColor: `rgba(255, 40, 40, ${1-character.prob})`
+                    }">
+                  {{character.char}}
+                  <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
+              </div>
+            </div>
           </div>
+
+
+          </div>
+          
           <div class="audio">
-            <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls></audio>
+            <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls v-on:play="stopRecording"></audio>
           </div>
         </div>
       </div>
@@ -54,6 +74,13 @@ export default {
     deleteObject: function (e) {
       this.transcriptions.splice(e, 1)
     },
+    stopRecording: function () {
+      try{this.recorder.stop();}
+      catch(e){}
+      this.recorder=null;
+      this.vadOn = false;
+      this.recordingOn = false
+    },   
     isMobile() {
       if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|SamsungBrowser|Opera Mini/i.test(navigator.userAgent)) {
         console.log(navigator.userAgent)
@@ -92,6 +119,8 @@ export default {
                 return
               }
               transcription['text'] = response.data.transcription
+              transcription['metadata'] = response.data.metadata
+              console.log(transcription['metadata'])
               transcription['audio_url'] = record.url
               transcription['status'] = 'Success'
             })
@@ -141,6 +170,7 @@ export default {
 </script>
 
 <style scoped>
+
 .Korero {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -300,5 +330,16 @@ audio{
 }
 .audio{
   padding: 0px 15px 0px 15px;
+}
+div.confidence{
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+div.char{
+  line-height: 20px;
+}
+span.prob{
+  font-size: 8px;
+  line-height: 0px;
 }
 </style>

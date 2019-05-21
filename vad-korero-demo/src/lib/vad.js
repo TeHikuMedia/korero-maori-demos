@@ -78,7 +78,7 @@ export default class VAD {
     this.voiceTrendMin = -5;
     this.voiceTrendStart = 2;
     this.voiceTrendEnd = -5;
-    this.damper = 0.025
+    this.damper = 0.02
     this.voiceTrendMin = this.voiceTrendEnd - this.damper/10;
     // Create analyser 
     this.analyser = this.options.context.createAnalyser();
