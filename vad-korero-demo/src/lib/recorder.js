@@ -1,7 +1,7 @@
 import Encoder from './encoder'
 import { convertTimeMMSS } from '../../node_modules/vue-audio-recorder/src/lib/utils'
 import VAD from './vad.js'
-import vis from './visualize'
+import vis from './visualise'
 
 export default class {
   constructor (options = {}) {

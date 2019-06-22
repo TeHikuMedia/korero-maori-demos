@@ -18,7 +18,7 @@
 
     <div class="body">
       <div id="transcriptions">
-        <div v-for="item in transcriptions" class='transcription' v-bind:class="[item.status]" v-if="item.status != 'Failed'"> 
+        <div v-for="(item, index) in transcriptions" class='transcription' v-bind:class="[item.status]" v-if="item.status != 'Failed'"> 
           <button class="delete" v-if="item.status != 'Transcribing'" v-on:click="deleteObject(index)"><i class="fa fa-times"></i></button>
           <div class='text'>
             <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>
@@ -70,9 +70,9 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div v-if="!item.show_metadata">
-            <div class='text' v-if="item.status != 'Transcribing'">{{item.text}}</div>
+            <div v-else>
+              <div v-if="item.status != 'Transcribing'">{{item.text}}</div>
+            </div>
           </div>
           <div class="audio">
             <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls v-on:play="stopRecording"></audio>
@@ -200,7 +200,6 @@ export default {
             .catch((error) => {
               transcription.status = 'Failed'
             })
-
           },
           afterRecording  : (stream) =>{
             this.buttonText = 'Start'            
@@ -209,12 +208,10 @@ export default {
           pauseRecording  : function(){console.log('paused')},
           micFailed       : function(){console.log('failed')},
           voiceStop: () => {
-            
             this.vadOn = false
           },
           voiceStart: () => {
             this.vadOn = true
-
           },
           canvasID: this.isMobile() ? null : 'canvas',
           bitRate         : 64,
