@@ -22,62 +22,59 @@
           <button class="delete" v-if="item.status != 'Transcribing'" v-on:click="deleteObject(index)"><i class="fa fa-times"></i></button>
           <div class='text'>
             <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>
-            <div v-if="item.show_metadata">
-              <div class='confidence'>
-                <div class="char" v-for="character in item.metadata">
-                  <div class="char-wrapper" v-if="character.char==' '"
-                       :style="{backgroundColor: `rgb(255, 40, 40, ${1-character.prob})`}">
-                       <span class="char">&nbsp;&nbsp;</span>
-                       <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
-                  </div>
-                  <div class="char-wrapper" v-if="character.char!=' '"
-                       :style="{
-                          backgroundColor: `rgba(255, 40, 40, ${1-character.prob})`
-                        }">
-                      <span class="char">{{character.char}}</span>
-                      <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
-                  </div>
-                </div>
+
+          <div class='confidence'>
+            <div class="char" v-for="character in item.metadata">
+              <div class="char-wrapper" v-if="character.char==' '"
+                   :style="{backgroundColor: `rgb(255, 40, 40, ${1-character.prob})`}">
+                   <span class="char">&nbsp;&nbsp;</span>
+                   <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
               </div>
-              <div><br></div>
-              <div class='confidence'>          
-                <div class="char" v-for="character in item.metadata">
-                  <div class="char-wrapper" v-if="character.acoustic==' '"
-                       :style="{backgroundColor: `rgb(255, 40, 40, ${character.entropy})`}">
-                       <span class="char">&nbsp;&nbsp;</span>
-                       <br><span class="prob">&nbsp;{{character.entropy.toFixed(2)}}&nbsp;</span>
-                  </div>
-                  <div class="char-wrapper" v-if="character.acoustic!=' '"
-                       :style="{
-                          backgroundColor: `rgba(255, 40, 40, ${character.entropy})`
-                        }">
-                      <span class="char">{{character.acoustic}}</span>
-                      <br><span class="prob">&nbsp;{{character.entropy.toFixed(2)}}&nbsp;</span>
-                  </div>
-                </div>
-              </div>
-              <div><br></div>
-              <div class='confidence'>          
-                <div class="word" v-for="word in item.words"
-                  :style="{
-                      backgroundColor: `rgba(255, 40, 40, ${1-word.prob})`
+              <div class="char-wrapper" v-if="character.char!=' '"
+                   :style="{
+                      backgroundColor: `rgba(255, 40, 40, ${1-character.prob})`
                     }">
-                  <div class="word-wrapper" 
-                    >
-                      <span class="char" v-for="char in word.word" v-if="char != ' '">{{char}}</span>
-                      
-                  </div><span class="prob">{{word.prob.toFixed(2)}}</span>
-                </div>
+                  <span class="char">{{character.char}}</span>
+                  <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
               </div>
-            </div>
-            <div v-else>
-              <div v-if="item.status != 'Transcribing'">{{item.text}}</div>
             </div>
           </div>
+          <div><br></div>
+          <div class='confidence'>          
+            <div class="char" v-for="character in item.metadata">
+              <div class="char-wrapper" v-if="character.acoustic==' '"
+                   :style="{backgroundColor: `rgb(255, 40, 40, ${character.entropy})`}">
+                   <span class="char">&nbsp;&nbsp;</span>
+                   <br><span class="prob">&nbsp;{{character.entropy.toFixed(2)}}&nbsp;</span>
+              </div>
+              <div class="char-wrapper" v-if="character.acoustic!=' '"
+                   :style="{
+                      backgroundColor: `rgba(255, 40, 40, ${character.entropy})`
+                    }">
+                  <span class="char">{{character.acoustic}}</span>
+                  <br><span class="prob">&nbsp;{{character.entropy.toFixed(2)}}&nbsp;</span>
+              </div>
+            </div>
+          </div>
+          <div><br></div>
+          <div class='confidence'>          
+            <div class="word" v-for="word in item.words"
+              :style="{
+                  backgroundColor: `rgba(255, 40, 40, ${1-word.prob})`
+                }">
+              <div class="word-wrapper" 
+                >
+                  <span class="char" v-for="char in word.word" v-if="char != ' '">{{char}}</span>
+                  
+              </div><span class="prob">{{word.prob.toFixed(2)}}</span>
+            </div>
+          </div>
+
+          </div>
+          
           <div class="audio">
             <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls v-on:play="stopRecording"></audio>
           </div>
-
         </div>
       </div>
     </div>
@@ -163,43 +160,37 @@ export default {
                 return
               }
               transcription['text'] = response.data.transcription
-              transcription['show_metadata'] = false
-              if (response.data.metadata){
-                console.log('getting response.data.metadata')
-                transcription['show_metadata'] = true
-                transcription['metadata'] = response.data.metadata
+              transcription['metadata'] = response.data.metadata
 
-                var words = []
-                var probs = []
-                var prob = []
-                var word = ''
-                var start = 0
-                for (var i=0; i <response.data.metadata.length; i++){
-                  word = word + response.data.metadata[i].char
-                  prob.push(response.data.metadata[i].prob)
-                  if (response.data.metadata[i].char != ' '){
-                    continue
-                  } else {
-                    words.push({'word': word, 'prob': this.p_word(prob)})
-                    prob = []
-                    start = i
-                    word = ''
-                  }
-                } 
-                words.push({'word': word, 'prob': this.p_word(prob)})
-                console.log(words)
-                transcription['words'] = words
-                console.log(transcription['metadata'])
-              } else {
-                console.log('NO response.data.metadata')
+              var words = []
+              var probs = []
+              var prob = []
+              var word = ''
+              var start = 0
+              for (var i=0; i <response.data.metadata.length; i++){
+                word = word + response.data.metadata[i].char
+                prob.push(response.data.metadata[i].prob)
+                if (response.data.metadata[i].char != ' '){
+                  continue
+                } else {
+                  words.push({'word': word, 'prob': this.p_word(prob)})
+                  prob = []
+                  start = i
+                  word = ''
+                }
               }
-              
+              words.push({'word': word, 'prob': this.p_word(prob)})
+              console.log(words)
+              transcription['words'] = words
+              // transcription['words'] = response.data.metadata
+              console.log(transcription['metadata'])
               transcription['audio_url'] = record.url
               transcription['status'] = 'Success'
             })
             .catch((error) => {
               transcription.status = 'Failed'
             })
+
           },
           afterRecording  : (stream) =>{
             this.buttonText = 'Start'            
@@ -208,10 +199,12 @@ export default {
           pauseRecording  : function(){console.log('paused')},
           micFailed       : function(){console.log('failed')},
           voiceStop: () => {
+            
             this.vadOn = false
           },
           voiceStart: () => {
             this.vadOn = true
+
           },
           canvasID: this.isMobile() ? null : 'canvas',
           bitRate         : 64,
@@ -401,7 +394,6 @@ audio{
 .audio{
   padding: 0px 15px 0px 15px;
 }
-
 div.confidence{
   display: inline-flex;
   flex-wrap: wrap;

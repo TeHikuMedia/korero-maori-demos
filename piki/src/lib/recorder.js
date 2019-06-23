@@ -1,7 +1,7 @@
 import Encoder from './encoder'
 import { convertTimeMMSS } from '../../node_modules/vue-audio-recorder/src/lib/utils'
 import VAD from './vad.js'
-import vis from './visualise'
+import vis from './visualize'
 
 export default class {
   constructor (options = {}) {
@@ -13,6 +13,7 @@ export default class {
     this.voiceStop       = options.voiceStop
     this.voiceStart      = options.voiceStart
     this.visCanvasID     = options.canvasID || null
+    this.vis             = options.visClass || new vis()
 
     this.bitRate = options.bitRate || 96
     this.sampleRate = options.sampleRate || 44100
@@ -28,11 +29,8 @@ export default class {
     this._duration = 0
 
     this.vad = null
-    this.vis = null
     this.activity = false
     this.flush = false
-
-    this.vis = null
 
     // Set Sample Rate according to device and browser campability
     this.context = new(window.AudioContext || window.webkitAudioContext)()
@@ -157,8 +155,8 @@ export default class {
     
     if (this.visCanvasID){
       try{
-        this.vis = new vis(this.visCanvasID, this.input, this.input.context)
-        this.vis.start()
+        this.vis.init(this.visCanvasID, this.input, this.input.context, true)
+        // this.vis.start()
       } catch(error){
         console.log(error)
       }

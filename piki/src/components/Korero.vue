@@ -1,96 +1,21 @@
 <template>
   <div class="Korero">
-    <div class="header">
-      <button id="startVAD" v-bind:class="{ vad: vadOn, on: recordingOn, 'loading': loadRecording}">
-        <i class="fa fa-microphone" ></i>
-        <i class="fa fa-stop" ></i>
-        <i class="fa fa-spinner fa-spin"></i>
-      </button>
-      <div id="vadStatus" v-bind:class="{ active: vadOn, 'mobile': isMobile()}">
-        <div>
-          <canvas id="canvas" v-if="!isMobile()"></canvas>
-          <span v-if="isMobile() && vadOn && recordingOn">Voice Detected</span>
-          <span v-if="isMobile() && recordingOn && !vadOn">Listening</span>
-          <span v-if="isMobile()">Hit Record</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="body">
-      <div id="transcriptions">
-        <div v-for="(item, index) in transcriptions" class='transcription' v-bind:class="[item.status]" v-if="item.status != 'Failed'"> 
-          <button class="delete" v-if="item.status != 'Transcribing'" v-on:click="deleteObject(index)"><i class="fa fa-times"></i></button>
-          <div class='text'>
-            <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>
-            <div v-if="item.show_metadata">
-              <div class='confidence'>
-                <div class="char" v-for="character in item.metadata">
-                  <div class="char-wrapper" v-if="character.char==' '"
-                       :style="{backgroundColor: `rgb(255, 40, 40, ${1-character.prob})`}">
-                       <span class="char">&nbsp;&nbsp;</span>
-                       <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
-                  </div>
-                  <div class="char-wrapper" v-if="character.char!=' '"
-                       :style="{
-                          backgroundColor: `rgba(255, 40, 40, ${1-character.prob})`
-                        }">
-                      <span class="char">{{character.char}}</span>
-                      <br><span class="prob">&nbsp;{{character.prob.toFixed(2)}}&nbsp;</span>
-                  </div>
-                </div>
-              </div>
-              <div><br></div>
-              <div class='confidence'>          
-                <div class="char" v-for="character in item.metadata">
-                  <div class="char-wrapper" v-if="character.acoustic==' '"
-                       :style="{backgroundColor: `rgb(255, 40, 40, ${character.entropy})`}">
-                       <span class="char">&nbsp;&nbsp;</span>
-                       <br><span class="prob">&nbsp;{{character.entropy.toFixed(2)}}&nbsp;</span>
-                  </div>
-                  <div class="char-wrapper" v-if="character.acoustic!=' '"
-                       :style="{
-                          backgroundColor: `rgba(255, 40, 40, ${character.entropy})`
-                        }">
-                      <span class="char">{{character.acoustic}}</span>
-                      <br><span class="prob">&nbsp;{{character.entropy.toFixed(2)}}&nbsp;</span>
-                  </div>
-                </div>
-              </div>
-              <div><br></div>
-              <div class='confidence'>          
-                <div class="word" v-for="word in item.words"
-                  :style="{
-                      backgroundColor: `rgba(255, 40, 40, ${1-word.prob})`
-                    }">
-                  <div class="word-wrapper" 
-                    >
-                      <span class="char" v-for="char in word.word" v-if="char != ' '">{{char}}</span>
-                      
-                  </div><span class="prob">{{word.prob.toFixed(2)}}</span>
-                </div>
-              </div>
-            </div>
-            <div v-else>
-              <div v-if="item.status != 'Transcribing'">{{item.text}}</div>
-            </div>
-          </div>
-          <div class="audio">
-            <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls v-on:play="stopRecording"></audio>
-          </div>
-
-        </div>
-      </div>
-    </div>
+    <Piki></Piki>
   </div>
 </template>
 
 <script>
 import recorder from '../lib/recorder.js'
+import Piki from './Piki'
+
 const ApiAuth = require('../../api_auth')
 const api_auth = ApiAuth.api_auth;
 const axios = require('axios');
 export default {
   name: 'Kōrero',
+  components: {
+    Piki,
+  },
   data () {
     return {
       vadOn: false,
