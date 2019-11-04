@@ -221,12 +221,12 @@ export default {
       }
 
       x.onerror = () => {
-        this.welcome_message = text
         this.audioEnded()
       }
 
       x.open("GET", domain + '/synth/'+text)
       x.send()
+      this.welcome_message = text
     },
     setupVisualise: function(){
       this.vis = new vis({'color': '#dc2250'});
