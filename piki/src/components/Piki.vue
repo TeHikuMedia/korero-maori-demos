@@ -69,6 +69,7 @@ export default {
     getCommand: function(command){
       console.log(`Getting ${command.action}`)
       console.log(`Getting ${command.url}`)
+      console.log(`Getting ${command.method}`)
       console.log(`Getting ${command.media_url}`)
       if ('url' in command){
         let y = new XMLHttpRequest()
@@ -81,6 +82,18 @@ export default {
         }
         y.open('GET', command.url)
         y.send()
+      } else if ('method' in command){
+        console.log('EXECUTING METHOD')
+        console.log(command.method())
+        // text = f()
+        // console.log(text)
+        var result = command.method()
+        command.response = result.response
+        this.mediaData = {
+          headline: result.time,
+          media: [{media_type: 'N'}]
+        }
+        this.isResponding = true
       } else if ('response' in command){
         this.isResponding = true
       }
@@ -106,11 +119,13 @@ export default {
             results[`${conf}`].push({'p': p, 'c': c})
             
             if (conf>=95){
+              // If 95% match or better then execute immediately
               console.log(`CONFIDENCE: ${conf}`)
               this.getCommand(c)
               this.synthesize(c.response)
               throw BreakException;
             } else if (p.search(command)>=0 && conf>=75){
+              // The entire transcribed command is in the command and > 75%
               this.getCommand(c)
               this.synthesize(c.response)
               throw BreakException;
@@ -118,16 +133,20 @@ export default {
           })
         })
 
+        console.log('no perfect match seaching for best match')
+
         for (var i=94; i>=75; i--){
-          try{
+          if (results[i] !== undefined){
             let r = results[i]
             if (r.length==1){
+              console.log('FOUND MATCH')
               console.log(`CONFIDENCE: ${i}`)
               console.log(r)
               this.getCommand(r[0]['c'])
               this.synthesize(r[0]['c'].response)
               throw BreakException;
             } else if (r.length>1){
+              console.log('MULTIPLE WITH SAME CONFIDENCE')
               if (levenshtein(r[0]['p'],r[1]['p'])/r[1]['p'].length <= .1){
                 console.log(`CONFIDENCE: ${i}`)
                 console.log(r)
@@ -135,10 +154,9 @@ export default {
                 this.synthesize(r[0]['c'].response)
               }
             }
+          } else{
+            console.log(results[i])
           }
-          catch(e){
-            console.log(e)
-          } 
         }
 
       } catch(e){
@@ -193,15 +211,20 @@ export default {
         }
         this.sources = sources
         try{
+          this.vis.setColor('#dc2250')
           this.audio.load()
           this.audio.play()
           this.vis.start()
         } catch(e){
           console.log(e)
         }
-        
-        
       }
+
+      x.onerror = () => {
+        this.welcome_message = text
+        this.audioEnded()
+      }
+
       x.open("GET", domain + '/synth/'+text)
       x.send()
     },
@@ -365,6 +388,7 @@ export default {
     } else {
       this.welcomed = true
     }
+    this.welcomed = false
     this.audio = document.getElementById('audio')
     this.audioSrc = this.audioCtx.createMediaElementSource(this.audio);
     this.setupVisualise()
