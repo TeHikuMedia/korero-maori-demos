@@ -11,13 +11,13 @@
     "build-bundle": "vue-cli-service build --target lib --name myLib ./src/components/Korero.vue"
   },
   "dependencies": {
-    "vue": "^2.5.2",
-    "vue-router": "^3.0.1",
-    "vue-audio-recorder": "^3.0.1",
-    "vue-custom-element": "^3.2.7",
     "ajv": "^6.10.0",
     "axios": "^0.18.1",
-    "opus-recorder": "^6.1.1"
+    "opus-recorder": "^6.1.1",
+    "vue": "^2.5.2",
+    "vue-audio-recorder": "^3.0.1",
+    "vue-custom-element": "^3.2.7",
+    "vue-router": "^3.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",
