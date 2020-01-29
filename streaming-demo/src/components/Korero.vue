@@ -1,6 +1,8 @@
 <template>
   <div class="Korero">
     <div class="header">
+      <h4>Kōrero Māori Streaming ASR (Demo)</h4>
+      <div class='status'> {{status}}</div>
       <button id="startVAD" v-bind:class="{ vad: vadOn, on: recordingOn, 'loading': loadRecording}">
         <i class="fa fa-microphone" ></i>
         <i class="fa fa-stop" ></i>
@@ -53,7 +55,8 @@ export default {
       buttonText: 'Start',
       transcriptions: [],
       icon: 'fa-microphone',
-      loadRecording: false
+      loadRecording: false,
+      status: ''
     }
   },
   methods: {
@@ -76,23 +79,12 @@ export default {
       }
     },
     processResult: function(text) {
-      var current = this.transcriptions[this.transcriptions.length - 1];
+      var current = this.transcriptions[0];
       if (current) {
           current.text = text;
           current.status = 'Success';
       }
     },
-    // p_not_word: function(n, probabilities){
-    //   if (n == 0){
-    //     return 0
-    //   }                                                                
-    //   else {
-    //     return probabilities[n - 1] * this.p_not_word(n - 1, probabilities) + (1 - probabilities[n - 1])
-    //   }
-    // },
-    // p_word: function(probabilities){
-    //   return 1 - this.p_not_word(probabilities.length, probabilities)      
-    // },
 
   },
   mounted: function () {
@@ -100,27 +92,26 @@ export default {
     startVAD.onclick = event => {
       if (this.recorder==null) {
         this.loadRecording = true;
-        var transcription = {
-          status: 'Transcribing',
-          text: null,
-          audio: null,
-        }
-        this.transcriptions.unshift(transcription)
+        this.transcriptions.unshift({text: null})
 
         // -- make  websocket 
-        var socket_url = 'ws://waha-tuhi-dev:5000/stt'
+        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT;
+        this.status = "Connecting to " + socket_url;
         this.socket = new WebSocket(socket_url);
         this.socket.binaryType = 'arraybuffer';
         var self = this;
         this.socket.onmessage = function(message) {
+          self.status = "Connected to " + socket_url;
           if (message.isTrusted) {
               self.processResult(message.data);
           }
         };
         this.socket.onclose = function () {
+           self.status = "Service unavailable";
            console.log('Connection to server closed');
         };
         this.socket.onerror = function (err) {
+           self.status = "Error getting data";
            console.log('Getting audio data error:', err);
         };
         // -- /make websocket
@@ -136,10 +127,9 @@ export default {
           afterRecording  : (stream) => {
             if (this.socket.readyState == 1)  {
               this.socket.send('EOS');
-              console.log("sent EOS")
             }
-            this.buttonText = 'Start'            
-            this.recorder=null;
+            //this.buttonText = 'Start' 
+            //this.recorder=null;
           },
 
           pauseRecording  : function() {
@@ -304,6 +294,12 @@ div.transcription.Success div.text [class*=fa]{
   padding-left: 15px;
   padding-right: 15px;  
 }
+.header .status {
+  margin-top: -15px;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
 #transcriptions{
   z-index: 0;
   display: flex;
