@@ -25,7 +25,7 @@
           <div class='text'>
             <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>
           
-            <div v-if="item.status != 'Transcribing'">{{item.text}}</div>
+            <div v-if="item.status != 'Transcribing'">{{item.captured_text}} <span class="active_text">{{item.active_text}}</span></div>
         
           </div>
           <div class="audio">
@@ -81,8 +81,14 @@ export default {
     processResult: function(text) {
       var current = this.transcriptions[0];
       if (current) {
-          current.text = text;
+        if (text=='EOS') {
+          current.captured_text += ' ' + current.active_text;
+          current.active_text = '';
+        }
+        else {  
+          current.active_text = text;
           current.status = 'Success';
+        }
       }
     },
 
@@ -92,7 +98,12 @@ export default {
     startVAD.onclick = event => {
       if (this.recorder==null) {
         this.loadRecording = true;
-        this.transcriptions.unshift({text: null})
+        var transcription = { 
+          status: 'Transcribing',
+          captured_text:'', 
+          active_text: null
+        }
+        this.transcriptions.unshift(transcription)
 
         // -- make  websocket 
         var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT;
@@ -128,8 +139,6 @@ export default {
             if (this.socket.readyState == 1)  {
               this.socket.send('EOS');
             }
-            //this.buttonText = 'Start' 
-            //this.recorder=null;
           },
 
           pauseRecording  : function() {
@@ -167,68 +176,6 @@ export default {
   }
 }
 
-
-// the non-streaming alternative
- // putRecording : (record) => {
- //            var transcription = {
- //              status: 'Transcribing',
- //              text: null,
- //              audio: null,
- //            }
- //            this.transcriptions.unshift(transcription)
- //            var formData = new FormData();
- //            formData.enctype="multipart/form-data";
- //            formData.append('audio_file', record.blob, 'audio_file.mp3')            
- //            axios.post(
- //              api_auth['url'],
- //              formData,
- //              {
- //                headers: api_auth['headers'],
- //              })
- //            .then((response) => {
- //              if (response.data.transcription == '' || response.data.transcription == ' ' ){
- //                transcription.status = 'Failed'
- //                return
- //              }
- //              transcription['text'] = response.data.transcription
- //              transcription['show_metadata'] = false
- //              if (response.data.metadata){
- //                console.log('getting response.data.metadata')
- //                transcription['show_metadata'] = true
- //                transcription['metadata'] = response.data.metadata
-
- //                var words = []
- //                var probs = []
- //                var prob = []
- //                var word = ''
- //                var start = 0
- //                for (var i=0; i <response.data.metadata.length; i++){
- //                  word = word + response.data.metadata[i].char
- //                  prob.push(response.data.metadata[i].prob)
- //                  if (response.data.metadata[i].char != ' '){
- //                    continue
- //                  } else {
- //                    words.push({'word': word, 'prob': this.p_word(prob)})
- //                    prob = []
- //                    start = i
- //                    word = ''
- //                  }
- //                } 
- //                words.push({'word': word, 'prob': this.p_word(prob)})
- //                console.log(words)
- //                transcription['words'] = words
- //                console.log(transcription['metadata'])
- //              } else {
- //                console.log('NO response.data.metadata')
- //              }
-              
- //              transcription['audio_url'] = record.url
- //              transcription['status'] = 'Success'
- //            })
- //            .catch((error) => {
- //              transcription.status = 'Failed'
- //            })
- //          },
 </script>
 
 <style scoped>
@@ -273,6 +220,10 @@ button.delete{
 }
 .transcription:nth-of-type(1){
   margin-top: 40px;
+}
+
+.transcription .active_text {
+  color: lightcoral;
 }
 
 div.transcription.Success div.text [class*=fa]{
