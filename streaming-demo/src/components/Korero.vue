@@ -92,6 +92,7 @@ export default {
       }
     },
 
+
   },
   mounted: function () {
 
@@ -176,6 +177,7 @@ export default {
   }
 }
 
+
 </script>
 
 <style scoped>
@@ -225,7 +227,6 @@ button.delete{
 .transcription .active_text {
   color: lightcoral;
 }
-
 div.transcription.Success div.text [class*=fa]{
   display: none;
 }
