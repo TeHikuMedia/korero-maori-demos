@@ -92,6 +92,55 @@ export default {
       }
     },
 
+    initWebSocket: function() {
+
+        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT;
+        this.status = "Connecting to " + socket_url;
+        this.socket = new WebSocket(socket_url);
+        this.socket.binaryType = 'arraybuffer';
+        var self = this;
+        this.socket.onmessage = function(message) {
+          //console.log(message);
+          self.status = "Connected to  " + socket_url;
+          if (message.isTrusted) {
+              self.processResult(message.data);
+          }
+        };
+        this.socket.onclose = function () {
+          self.status = "Last connected " + socket_url;
+          console.log('Connection to server closed');
+        };
+        this.socket.onerror = function (err) {
+           self.status = "Error getting data " + err;
+           console.log('Getting audio data error:', err);
+        };
+    },
+
+    ensureWebSocket: function() {
+      self = this;
+      if (this.socket == null) {
+        this.initWebSocket();
+      }
+      else {
+        var readyState = this.socket.readyState;
+
+        if (readyState == WebSocket.CLOSED) {
+          this.initWebSocket();
+        }
+
+        if (readyState == WebSocket.CLOSING) {
+          this.socket.onclose = function () {
+            self.initWebSocket();
+          }
+        }
+          
+        // otherwise, if WebSocket.CONNECTING || WebSocket.OPEN 
+        // just let nature take its course
+     
+      }
+        
+    }
+
 
   },
   mounted: function () {
@@ -106,27 +155,7 @@ export default {
         }
         this.transcriptions.unshift(transcription)
 
-        // -- make  websocket 
-        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT;
-        this.status = "Connecting to " + socket_url;
-        this.socket = new WebSocket(socket_url);
-        this.socket.binaryType = 'arraybuffer';
-        var self = this;
-        this.socket.onmessage = function(message) {
-          self.status = "Connected to " + socket_url;
-          if (message.isTrusted) {
-              self.processResult(message.data);
-          }
-        };
-        this.socket.onclose = function () {
-           self.status = "Service unavailable";
-           console.log('Connection to server closed');
-        };
-        this.socket.onerror = function (err) {
-           self.status = "Error getting data";
-           console.log('Getting audio data error:', err);
-        };
-        // -- /make websocket
+        this.initWebSocket();
 
         this.recorder = new recorder({
          
@@ -152,6 +181,7 @@ export default {
           },
           voiceStart: () => {
             this.vadOn = true
+            this.ensureWebSocket()
           },
           canvasID: this.isMobile() ? null : 'canvas',
           bitRate         : 64,
