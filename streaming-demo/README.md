@@ -26,9 +26,9 @@ You can then upload 16 Bit Binary Audio data to this websocket, and receive tran
 
 **Notes**:
 - Interim transcriptions are returned to client on a periodic basis, simultaneously to audio data being uploaded.
-- Audio data is sent as binary, PCM audio, transcriptions are sent in plain utf-8 text format.
+- Audio data should be sent as binary, PCM audio, transcriptions are returned in plain text (utf-8) format.
 - Interim transcriptions can update the entire text segment (for instance, once it hears the 'e' a best guess transcription for entire fragment may change from "nā ko" to "tenā koe")
-- Currently interim transcriptions are set every `0.8`seconds (but this may change without notice)
+- Currently, interim transcriptions are sent every `0.8`seconds. (This may change without notice.)
 - The special text string "EOS" is used to signify end of stream. 
 - Once it receives the "EOS" token, the ASR server always makes one final guess for full transcription, sends a final "EOS" itself, and then closes the websocket. 
 
