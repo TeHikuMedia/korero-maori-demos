@@ -1,6 +1,8 @@
 <template>
   <div class="Korero">
     <div class="header">
+      <h4>Kōrero Māori Streaming ASR (Demo)</h4>
+      <div class='status'> {{status}}</div>
       <button id="startVAD" v-bind:class="{ vad: vadOn, on: recordingOn, 'loading': loadRecording}">
         <i class="fa fa-microphone" ></i>
         <i class="fa fa-stop" ></i>
@@ -23,7 +25,7 @@
           <div class='text'>
             <i class="fa fa-spinner fa-spin" v-bind:class="[item.status]" v-if="item.status == 'Transcribing'" ></i>
           
-            <div v-if="item.status != 'Transcribing'">{{item.text}}</div>
+            <div v-if="item.status != 'Transcribing'">{{item.captured_text}} <span class="active_text">{{item.active_text}}</span></div>
         
           </div>
           <div class="audio">
@@ -53,7 +55,8 @@ export default {
       buttonText: 'Start',
       transcriptions: [],
       icon: 'fa-microphone',
-      loadRecording: false
+      loadRecording: false,
+      status: ''
     }
   },
   methods: {
@@ -76,23 +79,68 @@ export default {
       }
     },
     processResult: function(text) {
-      var current = this.transcriptions[this.transcriptions.length - 1];
+      var current = this.transcriptions[0];
       if (current) {
-          current.text = text;
+        if (text=='EOS') {
+          current.captured_text += ' ' + current.active_text;
+          current.active_text = '';
+        }
+        else {  
+          current.active_text = text;
           current.status = 'Success';
+        }
       }
     },
-    // p_not_word: function(n, probabilities){
-    //   if (n == 0){
-    //     return 0
-    //   }                                                                
-    //   else {
-    //     return probabilities[n - 1] * this.p_not_word(n - 1, probabilities) + (1 - probabilities[n - 1])
-    //   }
-    // },
-    // p_word: function(probabilities){
-    //   return 1 - this.p_not_word(probabilities.length, probabilities)      
-    // },
+
+    initWebSocket: function() {
+
+        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT;
+        this.status = "Connecting to " + socket_url;
+        this.socket = new WebSocket(socket_url);
+        this.socket.binaryType = 'arraybuffer';
+        var self = this;
+        this.socket.onmessage = function(message) {
+          //console.log(message);
+          self.status = "Connected to  " + socket_url;
+          if (message.isTrusted) {
+              self.processResult(message.data);
+          }
+        };
+        this.socket.onclose = function () {
+          self.status = "Last connected " + socket_url;
+          console.log('Connection to server closed');
+        };
+        this.socket.onerror = function (err) {
+           self.status = "Error getting data " + err;
+           console.log('Getting audio data error:', err);
+        };
+    },
+
+    ensureWebSocket: function() {
+      self = this;
+      if (this.socket == null) {
+        this.initWebSocket();
+      }
+      else {
+        var readyState = this.socket.readyState;
+
+        if (readyState == WebSocket.CLOSED) {
+          this.initWebSocket();
+        }
+
+        if (readyState == WebSocket.CLOSING) {
+          this.socket.onclose = function () {
+            self.initWebSocket();
+          }
+        }
+          
+        // otherwise, if WebSocket.CONNECTING || WebSocket.OPEN 
+        // just let nature take its course
+     
+      }
+        
+    }
+
 
   },
   mounted: function () {
@@ -100,30 +148,14 @@ export default {
     startVAD.onclick = event => {
       if (this.recorder==null) {
         this.loadRecording = true;
-        var transcription = {
+        var transcription = { 
           status: 'Transcribing',
-          text: null,
-          audio: null,
+          captured_text:'', 
+          active_text: null
         }
         this.transcriptions.unshift(transcription)
 
-        // -- make  websocket 
-        var socket_url = 'ws://waha-tuhi-dev:5000/stt'
-        this.socket = new WebSocket(socket_url);
-        this.socket.binaryType = 'arraybuffer';
-        var self = this;
-        this.socket.onmessage = function(message) {
-          if (message.isTrusted) {
-              self.processResult(message.data);
-          }
-        };
-        this.socket.onclose = function () {
-           console.log('Connection to server closed');
-        };
-        this.socket.onerror = function (err) {
-           console.log('Getting audio data error:', err);
-        };
-        // -- /make websocket
+        this.initWebSocket();
 
         this.recorder = new recorder({
          
@@ -136,10 +168,7 @@ export default {
           afterRecording  : (stream) => {
             if (this.socket.readyState == 1)  {
               this.socket.send('EOS');
-              console.log("sent EOS")
             }
-            this.buttonText = 'Start'            
-            this.recorder=null;
           },
 
           pauseRecording  : function() {
@@ -152,6 +181,7 @@ export default {
           },
           voiceStart: () => {
             this.vadOn = true
+            this.ensureWebSocket()
           },
           canvasID: this.isMobile() ? null : 'canvas',
           bitRate         : 64,
@@ -178,67 +208,6 @@ export default {
 }
 
 
-// the non-streaming alternative
- // putRecording : (record) => {
- //            var transcription = {
- //              status: 'Transcribing',
- //              text: null,
- //              audio: null,
- //            }
- //            this.transcriptions.unshift(transcription)
- //            var formData = new FormData();
- //            formData.enctype="multipart/form-data";
- //            formData.append('audio_file', record.blob, 'audio_file.mp3')            
- //            axios.post(
- //              api_auth['url'],
- //              formData,
- //              {
- //                headers: api_auth['headers'],
- //              })
- //            .then((response) => {
- //              if (response.data.transcription == '' || response.data.transcription == ' ' ){
- //                transcription.status = 'Failed'
- //                return
- //              }
- //              transcription['text'] = response.data.transcription
- //              transcription['show_metadata'] = false
- //              if (response.data.metadata){
- //                console.log('getting response.data.metadata')
- //                transcription['show_metadata'] = true
- //                transcription['metadata'] = response.data.metadata
-
- //                var words = []
- //                var probs = []
- //                var prob = []
- //                var word = ''
- //                var start = 0
- //                for (var i=0; i <response.data.metadata.length; i++){
- //                  word = word + response.data.metadata[i].char
- //                  prob.push(response.data.metadata[i].prob)
- //                  if (response.data.metadata[i].char != ' '){
- //                    continue
- //                  } else {
- //                    words.push({'word': word, 'prob': this.p_word(prob)})
- //                    prob = []
- //                    start = i
- //                    word = ''
- //                  }
- //                } 
- //                words.push({'word': word, 'prob': this.p_word(prob)})
- //                console.log(words)
- //                transcription['words'] = words
- //                console.log(transcription['metadata'])
- //              } else {
- //                console.log('NO response.data.metadata')
- //              }
-              
- //              transcription['audio_url'] = record.url
- //              transcription['status'] = 'Success'
- //            })
- //            .catch((error) => {
- //              transcription.status = 'Failed'
- //            })
- //          },
 </script>
 
 <style scoped>
@@ -285,6 +254,9 @@ button.delete{
   margin-top: 40px;
 }
 
+.transcription .active_text {
+  color: lightcoral;
+}
 div.transcription.Success div.text [class*=fa]{
   display: none;
 }
@@ -304,6 +276,12 @@ div.transcription.Success div.text [class*=fa]{
   padding-left: 15px;
   padding-right: 15px;  
 }
+.header .status {
+  margin-top: -15px;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
 #transcriptions{
   z-index: 0;
   display: flex;
