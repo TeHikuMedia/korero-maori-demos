@@ -6,9 +6,9 @@
 
 ### End points
 
-The API (incorporating this VueJS front end) is available at https://asr.koreromaori.io/. 
+The API (incorporating this VueJS front end) is available at https://ask-keoni.com/. 
 
-More specifically, the back end, websocket end point is at **wss://asr.koreromaori.io/stt**
+More specifically, the back end, websocket end point is at **wss://ask-keoni.com/stt**
 
 In javascript, you would establish a socket to the end point like this:
 
