@@ -13,7 +13,7 @@ More specifically, the back end, websocket end point is at **wss://ask-keoni.com
 In javascript, you would establish a socket to the end point like this:
 
 ```javascript
-var socket_url = "wss://asr.koreromaori.io/stt";
+var socket_url = "wss://ask-keoni.com/stt";
 var socket = new WebSocket(socket_url);
 socket.binaryType = 'arraybuffer';
 ```
