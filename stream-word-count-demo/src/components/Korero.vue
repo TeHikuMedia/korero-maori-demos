@@ -15,7 +15,29 @@
           <span v-if="isMobile()">Hit Record</span>
         </div>
       </div>
-    </div>
+   
+
+    <div id="te_reo_sensivity"  class="sensitivity_box">
+        Sensitivity:
+        <input
+          type="range"
+          min="0"
+          v-bind:max="sensitivity_max"
+          v-bind:value="te_reo_sensivity"
+          v-on:input="setTeReoSensivity($event)">
+          {{ te_reo_sensivity }}
+      </div>
+<!--       <div id="vad_sensitivity" class="sensitivity_box">
+        Voice Activity Sensitivity:
+        <input
+          type="range"
+          min="0"
+          v-bind:max="sensitivity_max"
+          v-bind:value="vad_sensitivity"
+          v-on:input="setVadSensivity($event)">
+          {{ vad_sensitivity }}
+      </div> -->
+  </div>
 
     <div class="body">
       <div id="transcriptions">
@@ -27,12 +49,9 @@
             <div v-if="item.status != 'Transcribing'">{{item.display_count}}</div>
         
           </div>
-          <div class="audio">
-            <audio v-if="item.audio_url" :src="item.audio_url" type="audio/mp3" controls v-on:play="stopRecording"></audio>
-          </div>
-
         </div>
       </div>
+      
     </div>
 
     <div class="footer">
@@ -52,6 +71,7 @@ export default {
   name: 'Kōrero',
   data () {
     return {
+
       vadOn: false,
       recordingOn: false,
       recorder: null,
@@ -59,6 +79,9 @@ export default {
       transcriptions: [],
       icon: 'fa-microphone',
       loadRecording: false,
+      te_reo_sensivity: 85,
+      vad_sensitivity: 10,
+      sensitivity_max: 100,
       status: '',
       totalCount : 0
     }
@@ -82,6 +105,20 @@ export default {
         return false
       }
     },
+    setTeReoSensivity: function(e) {
+      this.te_reo_sensivity=e.target.value;
+      if (this.sensitivity_sock.readyState == 1)  {
+        var tmp = parseInt(this.te_reo_sensivity)
+        var sensitivity = "" + tmp / this.sensitivity_max;
+        // if the server received 'Text' that can be 
+        // interpreted as a float, it assumes its sensititvy 
+        this.sensitivity_sock.send(sensitivity);
+      }
+
+    },
+    setVadSensivity: function(e) {
+      this.vad_sensitivity=e.target.value;
+    },
     processResult: function(text) {
       var current = this.transcriptions[0];
       if (current) {
@@ -97,11 +134,9 @@ export default {
         this.animateCount();
       }
     },
-
     animateCount: function() {
       var current = this.transcriptions[0];
       if (current) {
-          console.log(current);
           if (current.display_count == current.total_count) {
             current.active=false;
             return;
@@ -123,7 +158,7 @@ export default {
 
     initWebSocket: function() {
 
-        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT;
+        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT + "/word_count";
         this.status = "Connecting to " + socket_url;
         this.socket = new WebSocket(socket_url);
         this.socket.binaryType = 'arraybuffer';
@@ -161,19 +196,27 @@ export default {
           this.socket.onclose = function () {
             self.initWebSocket();
           }
-        }
-          
+        } 
         // otherwise, if WebSocket.CONNECTING || WebSocket.OPEN 
         // just let nature take its course
-     
       }
-        
-    }
+    },
 
+    initSensitivitySocket: function() {
+
+        var socket_url = process.env.ASR_WEBSOCKET_ENDPOINT + "/word_count_sensitivity"
+        console.log( "Connecting to " + socket_url);
+        this.sensitivity_sock = new WebSocket(socket_url);
+        this.sensitivity_sock.binaryType = 'arraybuffer';
+        this.sensitivity_sock.onmessage = function(message) {
+          console.log("Connected to  " + socket_url);
+        };
+    }
 
   },
   mounted: function () {
 
+    this.initSensitivitySocket();
     startVAD.onclick = event => {
       if (this.recorder==null) {
         this.loadRecording = true;
@@ -189,30 +232,36 @@ export default {
 
         this.recorder = new recorder({
          
-          processAudio  : (buffer) => {
+          processAudio: (buffer) => {
             if (this.socket.readyState == 1)  {
               this.socket.send(buffer);
             }
           },
 
-          afterRecording  : (stream) => {
+          afterRecording: (stream) => {
             if (this.socket.readyState == 1)  {
               this.socket.send('EOS');
             }
           },
 
-          pauseRecording  : function() {
+          pauseRecording: () => {
             streamer.stop();
             console.log('paused')
           },
-          micFailed       : function(){console.log('failed')},
+
+          micFailed: () => {
+            console.log('failed')
+          },
+          
           voiceStop: () => {
             this.vadOn = false
           },
+
           voiceStart: () => {
             this.vadOn = true
             this.ensureWebSocket()
           },
+
           canvasID: this.isMobile() ? null : 'canvas',
           bitRate         : 64,
           sampleRate      : 44100,
@@ -412,6 +461,15 @@ audio{
 }
 .audio{
   padding: 0px 15px 0px 15px;
+}
+div.sensitivity_box {
+  padding: 5px;
+  margin: 5px 0 10px 0;
+  align-self: center;
+  text-align: right;
+}
+div.sensitivity_box input {
+  width: 200px;
 }
 
 div.confidence{

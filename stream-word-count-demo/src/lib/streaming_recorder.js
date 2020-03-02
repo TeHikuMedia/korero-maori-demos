@@ -14,7 +14,7 @@ export default class {
     this.visCanvasID       = options.canvasID || null
 
     this.bitRate = options.bitRate || 96
-    this.sampleRate = options.sampleRate || 44100
+    this.sampleRate = options.sampleRate || 16000
     this.bufferSize = 4096
     this.records    = []
 
@@ -135,6 +135,7 @@ export default class {
       voice_start: this._voiceStart,
     };         
     this.vad = new VAD(options)
+    //this.vad.triggerLog()
     
     // create visualisation
     if (this.visCanvasID){
