@@ -4,5 +4,5 @@ const prodEnv = require('./prod.env')
 
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
-  ASR_WEBSOCKET_ENDPOINT: '"ws://asr.koreromaori.io/stt"'
+  ASR_WEBSOCKET_ENDPOINT: '"wss://asr.koreromaori.io/"'
 })
