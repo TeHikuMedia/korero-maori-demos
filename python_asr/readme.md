@@ -12,12 +12,12 @@ pip install -r requirements.txt
 
 ### Usage
 
-_This assumes you have the required username and password for the papareo api (uuuu and xxxx respetively in the below)_
+_This assumes you already a **username** and **password** to access the papareo api_
 
 **Transcribe one file ([simple example](transcribe_one.py))**
 
 ```
-(env) > python transcribe_one.py -u uuuu -p xxxx file.wav
+(env) > python transcribe_one.py -u xxxx -p xxxx file.wav
 ```
 
 ```
@@ -28,7 +28,7 @@ ahakoa noa atu ka aroha hoki ahau ki a ia
 **Transcribe a number of files (example [async code](transcribe.py))**
 
 ```
-(env) > python transcribe.py -u uuuu -p xxxx *.wav
+(env) > python transcribe.py -u xxxx -p xxxx *.wav
 ```
 
 ```
