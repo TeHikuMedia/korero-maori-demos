@@ -32,15 +32,17 @@ async def transcribe(http, url, wav_file_path):
 async def main(args):
 
     url = "https://asr.koreromaori.io/transcribe";
-   
+    
+
     conn = aiohttp.TCPConnector(limit=20) 
-    headers={"Authorization": f"Token {args.token}"}   
     http_session = aiohttp.ClientSession(
-        connector=conn,
-        headers=headers)
-   
-    # deprecated but supported
-    if args.user:
+        connector=conn)
+
+    if args.token:
+        headers={"Authorization": f"Token {args.token}"}
+        http_session.headers = headers
+        
+    elif args.user:
         auth=aiohttp.BasicAuth(args.user, args.password)
         http_session.auth = auth
 
@@ -58,8 +60,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('files', nargs='*', 
         help="transcribe these files")
-    parser.add_argument('-t', '--token', required=True, 
+    parser.add_argument('-u', '--user', required=False, 
+        help="Contact https://papareo.nz for an API user/password.")
+    parser.add_argument('-p', '--password', required=False, 
+        help="Contact https://papareo.nz for an API user/password.")
+    parser.add_argument('-t', '--token', required=False, 
         help="Contact https://papareo.nz for an API token.")
+
     args = parser.parse_args()
     
     asyncio.run(main(args))
