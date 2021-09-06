@@ -39,10 +39,10 @@ async def main(args):
         connector=conn,
         headers=headers)
    
-    # deprecated but supported
-    if args.user:
-        auth=aiohttp.BasicAuth(args.user, args.password)
-        http_session.auth = auth
+    # deprecated but supported at API end 
+    # if args.user:
+    #     auth=aiohttp.BasicAuth(args.user, args.password)
+    #     http_session.auth = auth
 
     async with http_session:
         
