@@ -12,12 +12,12 @@ pip install -r requirements.txt
 
 ### Usage
 
-_This assumes you already a **username** and **password** to access the papareo api_
+_This assumes you already have an **API TOKEN** to access the papareo api_
 
 **Transcribe one file ([simple example](transcribe_one.py))**
 
 ```
-(env) > python transcribe_one.py -u xxxx -p xxxx file.wav
+(env) > python transcribe_one.py -t API_TOKEN file.wav
 ```
 
 ```
@@ -28,7 +28,7 @@ ahakoa noa atu ka aroha hoki ahau ki a ia
 **Transcribe a number of files (example [async code](transcribe.py))**
 
 ```
-(env) > python transcribe.py -u xxxx -p xxxx *.wav
+(env) > python transcribe.py -t API_TOKEN *.wav
 ```
 
 ```

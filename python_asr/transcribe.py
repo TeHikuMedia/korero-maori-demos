@@ -34,9 +34,15 @@ async def main(args):
     url = "https://asr.koreromaori.io/transcribe";
    
     conn = aiohttp.TCPConnector(limit=20) 
+    headers={"Authorization": f"Token {args.token}"}   
     http_session = aiohttp.ClientSession(
         connector=conn,
-        auth=aiohttp.BasicAuth(args.user, args.password))
+        headers=headers)
+   
+    # deprecated but supported
+    if args.user:
+        auth=aiohttp.BasicAuth(args.user, args.password)
+        http_session.auth = auth
 
     async with http_session:
         
@@ -52,10 +58,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('files', nargs='*', 
         help="transcribe these files")
-    parser.add_argument('-u', '--user', required=True, 
-        help="Contact https://papareo.nz for an API user/password.")
-    parser.add_argument('-p', '--password', required=True, 
-        help="Contact https://papareo.nz for an API user/password.")
+    parser.add_argument('-t', '--token', required=True, 
+        help="Contact https://papareo.nz for an API token.")
     args = parser.parse_args()
     
     asyncio.run(main(args))
