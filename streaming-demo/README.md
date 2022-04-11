@@ -72,9 +72,11 @@ For example, in this demo, a new websocket is established every time voice activ
 
 As mentioned above we are hosting this on a best efforts basis and will attempt to keep it available 24/7. That said, no gaurantees can be given at this stage, given that we will be iterating fast on this service. Knowing how, when and if you intend to use it is very helpful for us. You can contact us at support .... tehiku.co.nz
 
-- ***Expect auth tokens to be added at some stage**
+- ~~***Expect auth tokens to be added at some stage**_~~
 
-We are happy to take feedback on the API design. That said, modulo significant feedback, we will endeavor not to change this overall very (simple) API design. That said, we are likely to add authentication token requirements to this API at some ponit in the near future. Let us know what kind of authentication scheme you would find easiest to use (oAuth, JWT etc).
+~~We are happy to take feedback on the API design. That said, modulo significant feedback, we will endeavor not to change this overall very (simple) API design. That said, we are likely to add authentication token requirements to this API at some ponit in the near future. Let us know what kind of authentication scheme you would find easiest to use (oAuth, JWT etc).~~
+
+Auth tokens are now part of the API. TODO: Update the code in this demo to use "AUTHORIZATION: ApiToken xyz12323r" headers instead of .htaccess style user/pass access.
 
 - **Retry when websocket is peremptorily closed**
 
