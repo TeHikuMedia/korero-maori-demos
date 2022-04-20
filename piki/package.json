@@ -13,7 +13,7 @@
   "dependencies": {
     "@vue/cli-service": "^3.8.4",
     "ajv": "^6.10.0",
-    "axios": "^0.19.0",
+    "axios": "^0.21.2",
     "js-levenshtein": "^1.1.6",
     "opus-recorder": "^6.1.1",
     "vue": "^2.5.2",
