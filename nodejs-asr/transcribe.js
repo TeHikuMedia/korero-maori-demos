@@ -25,11 +25,11 @@ const transcribeRaw = async (data, token) => {
             throw new Error('Problem transcribing file: ' + msg);
         }
     } catch (err) {
-        if (err.response && err.response.status==401) {
+        if (err?.response.status === 401) {
             throw new Error("Authorization failure. Do you need to set the auth token (variable in transcribe.js)?");  
         }
-        if (err.response && err.response.data && err.response.data.detail) {
-            throw new Error("Error transcribing file: (" + err.response.status + ') ' + err.response.data.detail);
+        if (err?.response?.data?.detail) {
+            throw new Error(`Error transcribing file: (${err.response.status}) ${err.response.data.detail}`, err);
         }
         else {
             console.error(err);
